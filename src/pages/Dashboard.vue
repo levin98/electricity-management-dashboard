@@ -213,6 +213,7 @@
         allPowerData: 0,
         totalPowerData: [],
         averageHourlyPower: 0,
+        lastTimestamp: "",
         totalCost: 0,
         bigLineChartCategories: ["ems001", "ems002", "ems003", "ems004", "ems005"],
         bigLineChart: {
@@ -300,7 +301,7 @@
           gradientColors: config.colors.primaryGradient,
           gradientStops: [1, 0.4, 0],
         },
-        rawData: []
+        rawData: [[], [], [], [], []]
       }
     },
     computed: {
@@ -374,23 +375,25 @@
             ":unitid": this.bigLineChartCategories[index]
           }
         };
-        this.rawData[index] = [];
-        dynamodb.query(params, function(err, data) {
+        dynamodb.query(params, (err, data) => {
           if (err) {
               console.log(JSON.stringify(err, undefined, 2));
           } else {
               // console.log(data.Items);
               this.rawData[index] = data.Items;
+              // console.log(this.rawData[index]);
               this.formatData(index);
           }
-        }.bind(this));
+        });
       },
       formatData(index) {
         this.bigLineChart.allData[index] = [];
         this.bigLineChart.allLabel[index] = [];
         this.rawData[index].forEach(element => {
-          this.bigLineChart.allData[index].push(element.data.data[0].value);
-          this.bigLineChart.allLabel[index].push(moment(element.data.data[0].timestamp).format('h:mm:ss a'));
+          if (this.bigLineChart.allLabel[index].length == 0 || moment(element.data.data[0].timestamp).format('YYYY-MM-DD h:mm:ss a') > this.bigLineChart.allLabel[index][this.bigLineChart.allLabel[index].length-1]) {
+            this.bigLineChart.allData[index].push(element.data.data[0].value);
+            this.bigLineChart.allLabel[index].push(moment(element.data.data[0].timestamp).format('YYYY-MM-DD h:mm:ss a'));
+          }
         });
         this.initBigChart(index);
         if(index == 0) {
@@ -417,6 +420,7 @@
         this.totalPowerData = data;
       },
       calculateTotalData() {
+        this.allPowerData = 0;
         this.totalPowerData.forEach(element => {
           this.allPowerData += element;
         });
@@ -430,6 +434,9 @@
         this.$rtl.enableRTL();
       }
       this.getAllData();
+      setInterval(() => {
+        this.getAllData();
+      }, 5000);
       
     },
     beforeDestroy() {
