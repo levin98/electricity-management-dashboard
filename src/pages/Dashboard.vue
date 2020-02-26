@@ -1,6 +1,37 @@
 <template>
   <div>
-    
+    <div class="row">
+      <div class="col-4">
+        <card type="nav-tabs">
+          <div slot="header" class="card-header-success">
+            Total Power Consumption (kW)
+          </div>
+          <blockquote class="blockquote mb-0">
+            <p>{{ allPowerData / 1000 }} kW</p>
+          </blockquote>
+        </card>
+      </div>
+      <div class="col-4">
+        <card type="nav-tabs">
+          <div slot="header" class="card-header-success">
+            Average Hourly Total Power Consumption (kWh)
+          </div>
+          <blockquote class="blockquote mb-0">
+            <p>{{ averageHourlyPower.toFixed(2) }} kWh</p>
+          </blockquote>
+        </card>
+      </div>
+      <div class="col-4">
+        <card type="nav-tabs">
+          <div slot="header" class="card-header-success">
+            Estimated cost (MYR)
+          </div>
+          <blockquote class="blockquote mb-0">
+            <p>RM {{ (averageHourlyPower * 21.80 / 100).toFixed(2) }}</p>
+          </blockquote>
+        </card>
+      </div>
+    </div>
     <div class="row">
       <div class="col-12">
         <card type="chart">
@@ -179,6 +210,10 @@
     data() {
       return {
         selectedIndex: 0,
+        allPowerData: 0,
+        totalPowerData: [],
+        averageHourlyPower: 0,
+        totalCost: 0,
         bigLineChartCategories: ["ems001", "ems002", "ems003", "ems004", "ems005"],
         bigLineChart: {
           allData: [],
@@ -274,17 +309,6 @@
       },
       isRTL() {
         return this.$rtl.isRTL;
-      },
-      totalPowerData() {
-        var data = [];
-        this.bigLineChart.allData[0].forEach((element, index) => {
-          var totalPowerConsumption = 0;
-          for(var x = 0; x < this.bigLineChartCategories.length; x++) {
-            totalPowerConsumption += this.bigLineChart.allData[x][index];
-          }
-          data.push(totalPowerConsumption);
-        });
-        return data;
       }
     },
     methods: {
@@ -370,8 +394,27 @@
         });
         this.initBigChart(index);
         if(index == 0) {
+          setTimeout(this.calculateTotalPower(), 1000);
           this.initTotalChart();
+          this.calculateTotalData();
         }
+      },
+      calculateTotalPower() {
+        var data = [];
+        this.bigLineChart.allData[0].forEach((element, index) => {
+          var totalPowerConsumption = 0;
+          for(var x = 0; x < this.bigLineChartCategories.length; x++) {
+            totalPowerConsumption += this.bigLineChart.allData[x][index];
+          }
+          data.push(totalPowerConsumption);
+        });
+        this.totalPowerData = data;
+      },
+      calculateTotalData() {
+        this.totalPowerData.forEach(element => {
+          this.allPowerData += element;
+        });
+        this.averageHourlyPower = this.allPowerData / (parseInt(moment(this.rawData[0][this.rawData[0].length]).format('X')) - parseInt(moment(this.rawData[0][0]).format('X'))) * 60 / 1000;
       }
     },
     mounted() {
