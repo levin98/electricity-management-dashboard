@@ -2,9 +2,9 @@
     "dashboard": {
         "completedTasks": "Completed Tasks",
         "dailySales": "Daily Sales",
-        "performance": "Performance",
+        "powerConsumption": "Power Consumption",
         "simpleTable": "Simple Table",
-        "totalShipments": "Total Shipments",
+        "totalPowerConsumption": "Total Power Consumption",
         "chartCategories": [
             "Accounts",
             "Purchases",
