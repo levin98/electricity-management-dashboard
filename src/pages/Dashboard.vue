@@ -44,7 +44,7 @@
                          :class="{active: bigLineChart.activeIndex === index}"
                          :id="index">
                     <input type="radio"
-                           @click="initBigChart(index)"
+                           @click="selectIndex(index)"
                            name="options" autocomplete="off"
                            :checked="bigLineChart.activeIndex === index">
                     {{option}}
@@ -178,6 +178,7 @@
     },
     data() {
       return {
+        selectedIndex: 0,
         bigLineChartCategories: ["ems001", "ems002", "ems003", "ems004", "ems005"],
         bigLineChart: {
           allData: [],
@@ -287,6 +288,10 @@
       }
     },
     methods: {
+      selectIndex(index) {
+        this.selectedIndex = index;
+        this.initBigChart(index);
+      },
       initBigChart(index) {
         let chartData = {
           datasets: [{
@@ -308,7 +313,7 @@
         }
         this.$refs.bigChart.updateGradients(chartData);
         this.bigLineChart.chartData = chartData;
-        this.bigLineChart.activeIndex = index;
+        this.bigLineChart.activeIndex = this.selectedIndex;
       },
       initTotalChart() {
         let chartData = {
