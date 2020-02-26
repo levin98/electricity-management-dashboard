@@ -394,9 +394,15 @@
         });
         this.initBigChart(index);
         if(index == 0) {
-          setTimeout(this.calculateTotalPower(), 1000);
-          this.initTotalChart();
-          this.calculateTotalData();
+          try {
+            this.calculateTotalPower();
+            this.initTotalChart();
+            this.calculateTotalData();
+            this.$notify({type: 'success', message: 'Data loaded successfully'});
+          } catch(err) {
+            this.$notify({type: 'danger', message: 'Data load failed. Retrying...'});
+            this.getAllData();
+          }
         }
       },
       calculateTotalPower() {
