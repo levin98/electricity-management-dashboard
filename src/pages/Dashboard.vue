@@ -197,7 +197,7 @@
     secretAccessKey: AWSconfig.aws_secret_access_key,
     sessionToken: AWSconfig.aws_session_token
   });
-  var dynamodb = new AWS.DynamoDB.DocumentClient();;
+  var dynamodb = new AWS.DynamoDB.DocumentClient();
   var moment = require('moment');
 
   export default {
