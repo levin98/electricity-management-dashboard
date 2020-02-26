@@ -3,8 +3,10 @@
         "completedTasks": "Completed Tasks",
         "dailySales": "Daily Sales",
         "powerConsumption": "Power Consumption",
+        "powerConsumptionTitle": "Power Consumption (W)",
         "simpleTable": "Simple Table",
         "totalPowerConsumption": "Total Power Consumption",
+        "totalPowerConsumptionTitle": "Total Power Consumption (W)",
         "chartCategories": [
             "Accounts",
             "Purchases",

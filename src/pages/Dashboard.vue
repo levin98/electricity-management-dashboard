@@ -1,6 +1,6 @@
 <template>
   <div>
-
+    
     <div class="row">
       <div class="col-12">
         <card type="chart">
@@ -8,7 +8,31 @@
             <div class="row">
               <div class="col-sm-6" :class="isRTL ? 'text-right' : 'text-left'">
                 <h5 class="card-category">{{$t('dashboard.totalPowerConsumption')}}</h5>
-                <h2 class="card-title">{{$t('dashboard.powerConsumption')}}</h2>
+                <h2 class="card-title">{{$t('dashboard.totalPowerConsumptionTitle')}}</h2>
+              </div>
+            </div>
+          </template>
+          <div class="chart-area">
+                <line-chart style="height: 100%"
+                            ref="totalChart"
+                            chart-id="total-line-chart"
+                            :chart-data="totalLineChart.chartData"
+                            :gradient-colors="totalLineChart.gradientColors"
+                            :gradient-stops="totalLineChart.gradientStops"
+                            :extra-options="totalLineChart.extraOptions">
+                </line-chart>
+              </div>
+        </card>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <card type="chart">
+          <template slot="header">
+            <div class="row">
+              <div class="col-sm-6" :class="isRTL ? 'text-right' : 'text-left'">
+                <h5 class="card-category">{{$t('dashboard.powerConsumption')}}</h5>
+                <h2 class="card-title">{{$t('dashboard.powerConsumptionTitle')}}</h2>
               </div>
               <div class="col-sm-6">
                 <div class="btn-group btn-group-toggle"
@@ -20,7 +44,7 @@
                          :class="{active: bigLineChart.activeIndex === index}"
                          :id="index">
                     <input type="radio"
-                           @click="getData(index)"
+                           @click="initBigChart(index)"
                            name="options" autocomplete="off"
                            :checked="bigLineChart.activeIndex === index">
                     {{option}}
@@ -165,6 +189,16 @@
           gradientStops: [1, 0.4, 0],
           categories: []
         },
+        totalLineChart: {
+          allData: [],
+          allLabel: [],
+          activeIndex: 0,
+          chartData: null,
+          extraOptions: chartConfigs.purpleChartOptions,
+          gradientColors: config.colors.primaryGradient,
+          gradientStops: [1, 0.4, 0],
+          categories: []
+        },
         purpleLineChart: {
           extraOptions: chartConfigs.purpleChartOptions,
           chartData: {
@@ -239,6 +273,17 @@
       },
       isRTL() {
         return this.$rtl.isRTL;
+      },
+      totalPowerData() {
+        var data = [];
+        this.bigLineChart.allData[0].forEach((element, index) => {
+          var totalPowerConsumption = 0;
+          for(var x = 0; x < this.bigLineChartCategories.length; x++) {
+            totalPowerConsumption += this.bigLineChart.allData[x][index];
+          }
+          data.push(totalPowerConsumption);
+        });
+        return data;
       }
     },
     methods: {
@@ -265,6 +310,33 @@
         this.bigLineChart.chartData = chartData;
         this.bigLineChart.activeIndex = index;
       },
+      initTotalChart() {
+        let chartData = {
+          datasets: [{
+            fill: true,
+            borderColor: config.colors.primary,
+            borderWidth: 2,
+            borderDash: [],
+            borderDashOffset: 0.0,
+            pointBackgroundColor: config.colors.primary,
+            pointBorderColor: 'rgba(255,255,255,0)',
+            pointHoverBackgroundColor: config.colors.primary,
+            pointBorderWidth: 20,
+            pointHoverRadius: 4,
+            pointHoverBorderWidth: 15,
+            pointRadius: 4,
+            data: this.totalPowerData
+          }],
+          labels: this.bigLineChart.allLabel[0],
+        }
+        this.$refs.totalChart.updateGradients(chartData);
+        this.totalLineChart.chartData = chartData;
+      },
+      getAllData() {
+        this.bigLineChartCategories.forEach((element, index) => {
+          this.getData(this.bigLineChartCategories.length - 1 - index);
+        });
+      },
       getData(index) {
         var params = {
           TableName: "ems",
@@ -273,13 +345,13 @@
             ":unitid": this.bigLineChartCategories[index]
           }
         };
-        this.raw_data = [];
+        this.rawData[index] = [];
         dynamodb.query(params, function(err, data) {
           if (err) {
               console.log(JSON.stringify(err, undefined, 2));
           } else {
               // console.log(data.Items);
-              this.rawData = data.Items;
+              this.rawData[index] = data.Items;
               this.formatData(index);
           }
         }.bind(this));
@@ -287,11 +359,14 @@
       formatData(index) {
         this.bigLineChart.allData[index] = [];
         this.bigLineChart.allLabel[index] = [];
-        this.rawData.forEach(element => {
+        this.rawData[index].forEach(element => {
           this.bigLineChart.allData[index].push(element.data.data[0].value);
           this.bigLineChart.allLabel[index].push(moment(element.data.data[0].timestamp).format('h:mm:ss a'));
         });
         this.initBigChart(index);
+        if(index == 0) {
+          this.initTotalChart();
+        }
       }
     },
     mounted() {
@@ -300,7 +375,8 @@
         this.i18n.locale = 'ar';
         this.$rtl.enableRTL();
       }
-      this.getData(0);
+      this.getAllData();
+      
     },
     beforeDestroy() {
       if (this.$rtl.isRTL) {
