@@ -1,33 +1,54 @@
 <template>
-  <base-table :data="tableData" :columns="columns">
-    <template slot="columns">
-      <th>#</th>
-      <th>Device ID</th>
-      <th>Type</th>
-      <th>Value</th>
-      <th>Time</th>
-    </template>  
-    <template slot-scope="{row}">
-      <td>{{row.id}}</td>
-      <td>{{row.deviceId}}</td>
-      <td>{{row.type}}</td>
-      <td>{{row.value}} W</td>
-      <td>{{row.timestamp}}</td>
-    </template>    
-  </base-table>
+  <div class="row">
+    <div class="col-12">
+      <card type="chart">
+        <template slot="header">
+          <div class="row">
+            <div class="col-sm-6">
+            </div>
+            <div class="col-sm-6">
+              <div class="btn-group btn-group-toggle"
+                    :class="isRTL ? 'float-left' : 'float-right'"
+                    data-toggle="buttons">
+                <label v-for="(option, index) in $t('dashboard.chartCategories')"
+                        :key="option"
+                        class="btn btn-sm btn-primary btn-simple"
+                        :class="{active: activeIndex === index}"
+                        :id="index">
+                  <input type="radio"
+                          @click="activeIndex = index"
+                          name="options" autocomplete="off"
+                          :checked="activeIndex === index">
+                  {{option}}
+                </label>
+              </div>
+            </div>
+          </div>
+        </template>
+        <base-table :data="tableData[$t('dashboard.chartCategories')[activeIndex]]" :columns="columns">
+          <template slot="columns">
+            <th>#</th>
+            <th>Device ID</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Time</th>
+          </template>  
+          <template slot-scope="{row}">
+            <td>{{row.id}}</td>
+            <td>{{row.deviceId}}</td>
+            <td>{{row.type}}</td>
+            <td>{{row.value}} W</td>
+            <td>{{row.timestamp}}</td>
+          </template>    
+        </base-table>
+      </card>
+    </div>
+  </div>
 </template>
 <script>
   import { BaseTable } from "@/components";
-  import AWSconfig from "../../config.json";
+  import io from "socket.io-client";
 
-  const AWS = require("aws-sdk");
-  AWS.config.update({
-    region: AWSconfig.aws_region,
-    accessKeyId: AWSconfig.aws_access_key_id,
-    secretAccessKey: AWSconfig.aws_secret_access_key,
-    sessionToken: AWSconfig.aws_session_token
-  });
-  var dynamodb = new AWS.DynamoDB.DocumentClient();
   var moment = require('moment');
 
   export default {
@@ -37,44 +58,21 @@
     data() {
       return {
         columns: ["id", "deviceId", "type", "value", "timestamp"],
-        tableData: [],
-        rawData: []
+        tableData: { "ems001": [], "ems002": [], "ems003": [], "ems004": [], "ems005": []},
+        activeIndex: 0
       }
     },
     methods: {
       getData() {
-        var params = {
-          TableName: "ems",
-          ProjectionExpression: "deviceId, #ts, #d",
-          ExpressionAttributeNames: {
-              "#ts": "timestamp",
-              "#d" : "data"
-          }
-        };
-
-        dynamodb.scan(params, (err, data) => {
-          if (err) {
-            this.$notify({type: 'danger', message: 'Data load from DynamoDB failed'});
-            console.log(JSON.stringify(err, undefined, 2));
+        var socket = io.connect("http://localhost:4000");
+        socket.on("historydata", fetchedData => {
+          // console.log(fetchedData);
+          if (fetchedData.statusCode == 400) {
+            console.log(fetchedData);
           } else {
-            // console.log(JSON.stringify(data, undefined, 2));
-            this.$notify({type: 'success', message: 'Data loaded from DynamoDB successfully'});
-            this.rawData = data.Items;
-            this.populateData();
+            this.tableData = fetchedData;
           }
         });
-      },
-      populateData() {
-        this.rawData.forEach((element, index) => {
-          this.tableData[index] = {
-            id: index + 1,
-            deviceId: element.deviceId,
-            type: element.data.data[0].device_type,
-            value: element.data.data[0].value,
-            timestamp: moment(element.data.data[0].timestamp).format('MMMM Do YYYY, h:mm:ss a')
-          }
-        });
-        this.$forceUpdate();
       }
     },
     mounted() {
