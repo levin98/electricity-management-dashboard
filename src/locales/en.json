@@ -3,14 +3,16 @@
         "completedTasks": "Completed Tasks",
         "dailySales": "Daily Sales",
         "powerConsumption": "Power Consumption",
-        "powerConsumptionTitle": "Power Consumption (W)",
+        "powerConsumptionTitle": "Power Consumption (Wh)",
         "simpleTable": "Simple Table",
         "totalPowerConsumption": "Total Power Consumption",
-        "totalPowerConsumptionTitle": "Total Power Consumption (W)",
+        "totalPowerConsumptionTitle": "Total Power Consumption (Wh)",
         "chartCategories": [
-            "Accounts",
-            "Purchases",
-            "Sessions"
+            "ems001",
+            "ems002",
+            "ems003",
+            "ems004",
+            "ems005"
         ],
         "tasks": "Tasks({count})",
         "today": "Today",

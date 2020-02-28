@@ -4,17 +4,17 @@
       <div class="col-4">
         <card type="nav-tabs">
           <div slot="header" class="card-header-success">
-            Total Power Consumption (kW)
+            Total Power Consumption (kWh)
           </div>
           <blockquote class="blockquote mb-0">
-            <p>{{ allPowerData / 1000 }} kW</p>
+            <p>{{ totalPower.toFixed(2) }} kWh</p>
           </blockquote>
         </card>
       </div>
       <div class="col-4">
         <card type="nav-tabs">
           <div slot="header" class="card-header-success">
-            Average Hourly Total Power Consumption (kWh)
+            Average Power Consumption (kWh)
           </div>
           <blockquote class="blockquote mb-0">
             <p>{{ averageHourlyPower.toFixed(2) }} kWh</p>
@@ -27,7 +27,7 @@
             Estimated cost (MYR)
           </div>
           <blockquote class="blockquote mb-0">
-            <p>RM {{ (averageHourlyPower * 21.80 / 100).toFixed(2) }}</p>
+            <p>RM {{ totalCost.toFixed(2) }}</p>
           </blockquote>
         </card>
       </div>
@@ -97,128 +97,34 @@
         </card>
       </div>
     </div>
-    <!-- <div class="row">
-      <div class="col-lg-4" :class="{'text-right': isRTL}">
-        <card type="chart">
-          <template slot="header">
-            <h5 class="card-category">{{$t('dashboard.totalShipments')}}</h5>
-            <h3 class="card-title"><i class="tim-icons icon-bell-55 text-primary "></i> 763,215</h3>
-          </template>
-          <div class="chart-area">
-            <line-chart style="height: 100%"
-                        chart-id="purple-line-chart"
-                        :chart-data="purpleLineChart.chartData"
-                        :gradient-colors="purpleLineChart.gradientColors"
-                        :gradient-stops="purpleLineChart.gradientStops"
-                        :extra-options="purpleLineChart.extraOptions">
-            </line-chart>
-          </div>
-        </card>
-      </div>
-      <div class="col-lg-4" :class="{'text-right': isRTL}">
-        <card type="chart">
-          <template slot="header">
-            <h5 class="card-category">{{$t('dashboard.dailySales')}}</h5>
-            <h3 class="card-title"><i class="tim-icons icon-delivery-fast text-info "></i> 3,500€</h3>
-          </template>
-          <div class="chart-area">
-            <bar-chart style="height: 100%"
-                       chart-id="blue-bar-chart"
-                       :chart-data="blueBarChart.chartData"
-                       :gradient-stops="blueBarChart.gradientStops"
-                       :extra-options="blueBarChart.extraOptions">
-            </bar-chart>
-          </div>
-        </card>
-      </div>
-      <div class="col-lg-4" :class="{'text-right': isRTL}">
-        <card type="chart">
-          <template slot="header">
-            <h5 class="card-category">{{$t('dashboard.completedTasks')}}</h5>
-            <h3 class="card-title"><i class="tim-icons icon-send text-success "></i> 12,100K</h3>
-          </template>
-          <div class="chart-area">
-            <line-chart style="height: 100%"
-                        chart-id="green-line-chart"
-                        :chart-data="greenLineChart.chartData"
-                        :gradient-stops="greenLineChart.gradientStops"
-                        :extra-options="greenLineChart.extraOptions">
-            </line-chart>
-          </div>
-        </card>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-6 col-md-12">
-        <card type="tasks" :header-classes="{'text-right': isRTL}">
-          <template slot="header">
-            <h6 class="title d-inline">{{$t('dashboard.tasks', {count: 5})}}</h6>
-            <p class="card-category d-inline">{{$t('dashboard.today')}}</p>
-            <base-dropdown menu-on-right=""
-                           tag="div"
-                           title-classes="btn btn-link btn-icon"
-                           aria-label="Settings menu"
-                           :class="{'float-left': isRTL}">
-              <i slot="title" class="tim-icons icon-settings-gear-63"></i>
-              <a class="dropdown-item" href="#pablo">{{$t('dashboard.dropdown.action')}}</a>
-              <a class="dropdown-item" href="#pablo">{{$t('dashboard.dropdown.anotherAction')}}</a>
-              <a class="dropdown-item" href="#pablo">{{$t('dashboard.dropdown.somethingElse')}}</a>
-            </base-dropdown>
-          </template>
-          <div class="table-full-width table-responsive">
-            <task-list></task-list>
-          </div>
-        </card>
-      </div>
-      <div class="col-lg-6 col-md-12">
-        <card class="card" :header-classes="{'text-right': isRTL}">
-          <h4 slot="header" class="card-title">{{$t('dashboard.simpleTable')}}</h4>
-          <div class="table-responsive">
-            <user-table></user-table>
-          </div>
-        </card>
-      </div>
-    </div> -->
   </div>
 </template>
 <script>
   import LineChart from '@/components/Charts/LineChart';
   import BarChart from '@/components/Charts/BarChart';
   import * as chartConfigs from '@/components/Charts/config';
-  import TaskList from './Dashboard/TaskList';
-  import UserTable from './Dashboard/UserTable';
   import config from '@/config';
-  import AWSconfig from "../../config.json";
+  import io from "socket.io-client";
 
-  const AWS = require("aws-sdk");
-  AWS.config.update({
-    region: AWSconfig.aws_region,
-    accessKeyId: AWSconfig.aws_access_key_id,
-    secretAccessKey: AWSconfig.aws_secret_access_key,
-    sessionToken: AWSconfig.aws_session_token
-  });
-  var dynamodb = new AWS.DynamoDB.DocumentClient();
   var moment = require('moment');
 
   export default {
     components: {
       LineChart,
-      BarChart,
-      TaskList,
-      UserTable
+      BarChart
     },
     data() {
       return {
         selectedIndex: 0,
         allPowerData: 0,
-        totalPowerData: [],
+        totalPower: 0,
         averageHourlyPower: 0,
         lastTimestamp: "",
         totalCost: 0,
         bigLineChartCategories: ["ems001", "ems002", "ems003", "ems004", "ems005"],
         bigLineChart: {
-          allData: [],
-          allLabel: [],
+          allData: {},
+          allLabel: {},
           activeIndex: 0,
           chartData: null,
           extraOptions: chartConfigs.purpleChartOptions,
@@ -235,73 +141,7 @@
           gradientColors: config.colors.primaryGradient,
           gradientStops: [1, 0.4, 0],
           categories: []
-        },
-        purpleLineChart: {
-          extraOptions: chartConfigs.purpleChartOptions,
-          chartData: {
-            labels: ['JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
-            datasets: [{
-              label: "Data",
-              fill: true,
-              borderColor: config.colors.primary,
-              borderWidth: 2,
-              borderDash: [],
-              borderDashOffset: 0.0,
-              pointBackgroundColor: config.colors.primary,
-              pointBorderColor: 'rgba(255,255,255,0)',
-              pointHoverBackgroundColor: config.colors.primary,
-              pointBorderWidth: 20,
-              pointHoverRadius: 4,
-              pointHoverBorderWidth: 15,
-              pointRadius: 4,
-              data: [80, 100, 70, 80, 120, 80],
-            }]
-          },
-          gradientColors: config.colors.primaryGradient,
-          gradientStops: [1, 0.2, 0],
-        },
-        greenLineChart: {
-          extraOptions: chartConfigs.greenChartOptions,
-          chartData: {
-            labels: ['JUL', 'AUG', 'SEP', 'OCT', 'NOV'],
-            datasets: [{
-              label: "My First dataset",
-              fill: true,
-              borderColor: config.colors.danger,
-              borderWidth: 2,
-              borderDash: [],
-              borderDashOffset: 0.0,
-              pointBackgroundColor: config.colors.danger,
-              pointBorderColor: 'rgba(255,255,255,0)',
-              pointHoverBackgroundColor: config.colors.danger,
-              pointBorderWidth: 20,
-              pointHoverRadius: 4,
-              pointHoverBorderWidth: 15,
-              pointRadius: 4,
-              data: [90, 27, 60, 12, 80],
-            }]
-          },
-          gradientColors: ['rgba(66,134,121,0.15)', 'rgba(66,134,121,0.0)', 'rgba(66,134,121,0)'],
-          gradientStops: [1, 0.4, 0],
-        },
-        blueBarChart: {
-          extraOptions: chartConfigs.barChartOptions,
-          chartData: {
-            labels: ['USA', 'GER', 'AUS', 'UK', 'RO', 'BR'],
-            datasets: [{
-              label: "Countries",
-              fill: true,
-              borderColor: config.colors.info,
-              borderWidth: 2,
-              borderDash: [],
-              borderDashOffset: 0.0,
-              data: [53, 20, 10, 80, 100, 45],
-            }]
-          },
-          gradientColors: config.colors.primaryGradient,
-          gradientStops: [1, 0.4, 0],
-        },
-        rawData: [[], [], [], [], []]
+        }
       }
     },
     computed: {
@@ -313,11 +153,35 @@
       }
     },
     methods: {
+      getRealtimeData() {
+        
+        var socket = io.connect("http://localhost:4000");
+        socket.on("newdata", fetchedData => {
+          // console.log(fetchedData);
+          if (fetchedData.statusCode == 400) {
+            console.log(fetchedData);
+          } else {
+            this.bigLineChart.allData = fetchedData.value;
+            this.bigLineChart.allLabel = fetchedData.timestamp;
+            this.selectIndex(this.selectedIndex);
+          }
+        });
+        socket.on("totaldata", fetchedData => {
+          // console.log(fetchedData);
+          if (fetchedData.statusCode == 400) {
+            console.log(fetchedData);
+          } else {
+            this.totalLineChart.allData = fetchedData.value;
+            this.totalLineChart.allLabel = fetchedData.timestamp;
+            this.initTotalChart();
+          }
+        });
+      },
       selectIndex(index) {
         this.selectedIndex = index;
-        this.initBigChart(index);
+        this.initBigChart(this.bigLineChartCategories[index]);
       },
-      initBigChart(index) {
+      initBigChart(category) {
         let chartData = {
           datasets: [{
             fill: true,
@@ -332,9 +196,9 @@
             pointHoverRadius: 4,
             pointHoverBorderWidth: 15,
             pointRadius: 4,
-            data: this.bigLineChart.allData[index]
+            data: this.bigLineChart.allData[category]
           }],
-          labels: this.bigLineChart.allLabel[index],
+          labels: this.bigLineChart.allLabel[category]
         }
         this.$refs.bigChart.updateGradients(chartData);
         this.bigLineChart.chartData = chartData;
@@ -355,76 +219,25 @@
             pointHoverRadius: 4,
             pointHoverBorderWidth: 15,
             pointRadius: 4,
-            data: this.totalPowerData
+            data: this.totalLineChart.allData
           }],
-          labels: this.bigLineChart.allLabel[0],
+          labels: this.totalLineChart.allLabel,
         }
         this.$refs.totalChart.updateGradients(chartData);
         this.totalLineChart.chartData = chartData;
-      },
-      getAllData() {
-        this.bigLineChartCategories.forEach((element, index) => {
-          this.getData(this.bigLineChartCategories.length - 1 - index);
-        });
-      },
-      getData(index) {
-        var params = {
-          TableName: "ems",
-          KeyConditionExpression: "deviceId = :unitid",
-          ExpressionAttributeValues: {
-            ":unitid": this.bigLineChartCategories[index]
-          }
-        };
-        dynamodb.query(params, (err, data) => {
-          if (err) {
-              console.log(JSON.stringify(err, undefined, 2));
-          } else {
-              // console.log(data.Items);
-              this.rawData[index] = data.Items;
-              // console.log(this.rawData[index]);
-              this.formatData(index);
-          }
-        });
-      },
-      formatData(index) {
-        this.bigLineChart.allData[index] = [];
-        this.bigLineChart.allLabel[index] = [];
-        this.rawData[index].forEach(element => {
-          if (this.bigLineChart.allLabel[index].length == 0 || moment(element.data.data[0].timestamp).format('YYYY-MM-DD h:mm:ss a') > this.bigLineChart.allLabel[index][this.bigLineChart.allLabel[index].length-1]) {
-            this.bigLineChart.allData[index].push(element.data.data[0].value);
-            this.bigLineChart.allLabel[index].push(moment(element.data.data[0].timestamp).format('YYYY-MM-DD h:mm:ss a'));
-          }
-        });
-        this.initBigChart(index);
-        if(index == 0) {
-          try {
-            this.calculateTotalPower();
-            this.initTotalChart();
-            this.calculateTotalData();
-            this.$notify({type: 'success', message: 'Data loaded successfully'});
-          } catch(err) {
-            this.$notify({type: 'danger', message: 'Data load failed. Retrying...'});
-            this.getAllData();
-          }
-        }
-      },
-      calculateTotalPower() {
-        var data = [];
-        this.bigLineChart.allData[0].forEach((element, index) => {
-          var totalPowerConsumption = 0;
-          for(var x = 0; x < this.bigLineChartCategories.length; x++) {
-            totalPowerConsumption += this.bigLineChart.allData[x][index];
-          }
-          data.push(totalPowerConsumption);
-        });
-        this.totalPowerData = data;
+        this.calculateTotalData();
       },
       calculateTotalData() {
         this.allPowerData = 0;
-        this.totalPowerData.forEach(element => {
+        this.totalLineChart.allData.forEach(element => {
           this.allPowerData += element;
         });
-        this.averageHourlyPower = this.allPowerData / (parseInt(moment(this.rawData[0][this.rawData[0].length]).format('X')) - parseInt(moment(this.rawData[0][0]).format('X'))) * 60 / 1000;
+        var firstDate = moment(this.totalLineChart.allLabel[0]);
+        var lastDate = moment(this.totalLineChart.allLabel[this.totalLineChart.allLabel.length-1]);
+        console.log(lastDate.diff(firstDate, 'hour'));
+        this.averageHourlyPower = this.allPowerData / this.totalLineChart.allData.length / 1000;
+        this.totalPower = this.averageHourlyPower * (lastDate.diff(firstDate, 'hour') + 1);
+        this.totalCost = this.averageHourlyPower / 3600 * lastDate.diff(firstDate, 'second') * 0.218;
       }
     },
     mounted() {
@@ -433,11 +246,7 @@
         this.i18n.locale = 'ar';
         this.$rtl.enableRTL();
       }
-      this.getAllData();
-      setInterval(() => {
-        this.getAllData();
-      }, 5000);
-      
+      this.getRealtimeData();
     },
     beforeDestroy() {
       if (this.$rtl.isRTL) {
