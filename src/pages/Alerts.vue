@@ -10,7 +10,7 @@
                            aria-label="Settings menu"
                            :class="{'float-left': false}">
               <i slot="title" class="tim-icons icon-settings-gear-63"></i>
-              <a class="dropdown-item" href="#pablo">Clear All</a>
+              <a class="dropdown-item" href="#" @click="clearAlert()">Clear All</a>
             </base-dropdown>
           </template>
           <div class="table-full-width table-responsive">
@@ -31,6 +31,7 @@
 <script>
   import io from "socket.io-client";
   import {BaseTable} from '@/components'
+  import axios from 'axios';
 
   export default {
     components: {
@@ -59,10 +60,31 @@
         });
       },
       clearAlert() {
-        
+        var blacklistData = { 
+          "blacklistedMessageId": []
+         }
+
+        this.tableData.forEach(element => {
+          blacklistData.blacklistedMessageId.push(element.messageId)
+        })
+
+        axios.post("http://localhost:4000/blacklist", { body: blacklistData })
+        .then(response => {
+          // console.log(response)
+          if(response.status == 200) {
+            this.tableData = [];
+            this.$notify({type: 'success', message: 'Alerts have been cleared.'});
+            this.$parent.$parent.$root.$emit('handleClearAlert');
+          } else {
+            this.$notify({type: 'danger', message: 'Failed to clear all alerts, please try again later.'});
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        });
       }
-    }
-    ,mounted() {
+    },
+    mounted() {
       this.getAlert();
     }
   };

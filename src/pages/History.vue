@@ -59,7 +59,8 @@
       return {
         columns: ["id", "deviceId", "type", "value", "timestamp"],
         tableData: { "ems001": [], "ems002": [], "ems003": [], "ems004": [], "ems005": []},
-        activeIndex: 0
+        activeIndex: 0,
+        isRTL: false
       }
     },
     methods: {

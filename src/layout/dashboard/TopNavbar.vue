@@ -155,6 +155,11 @@
     },
     mounted() {
       this.getAlert();
+    },
+    created() {
+      this.$root.$on('handleClearAlert', () => {
+        this.alertCount = 0;
+      })
     }
   };
 </script>

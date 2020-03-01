@@ -200,7 +200,9 @@
           }],
           labels: this.bigLineChart.allLabel[category]
         }
-        this.$refs.bigChart.updateGradients(chartData);
+        if(this.$refs.bigChart) {
+          this.$refs.bigChart.updateGradients(chartData);
+        }
         this.bigLineChart.chartData = chartData;
         this.bigLineChart.activeIndex = this.selectedIndex;
       },
@@ -223,7 +225,9 @@
           }],
           labels: this.totalLineChart.allLabel,
         }
-        this.$refs.totalChart.updateGradients(chartData);
+        if(this.$refs.totalChart) {
+          this.$refs.totalChart.updateGradients(chartData);
+        }
         this.totalLineChart.chartData = chartData;
         this.calculateTotalData();
       },
@@ -234,7 +238,7 @@
         });
         var firstDate = moment(this.totalLineChart.allLabel[0]);
         var lastDate = moment(this.totalLineChart.allLabel[this.totalLineChart.allLabel.length-1]);
-        console.log(lastDate.diff(firstDate, 'hour'));
+        // console.log(lastDate.diff(firstDate, 'hour'));
         this.averageHourlyPower = this.allPowerData / this.totalLineChart.allData.length / 1000;
         this.totalPower = this.averageHourlyPower * (lastDate.diff(firstDate, 'hour') + 1);
         this.totalCost = this.averageHourlyPower / 3600 * lastDate.diff(firstDate, 'second') * 0.218;
