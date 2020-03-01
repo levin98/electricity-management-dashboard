@@ -5,6 +5,10 @@
         <template slot="header">
           <div class="row">
             <div class="col-sm-6">
+              <download-csv
+                :data="CSVdata">
+                <button class="btn btn-sm btn-primary">Generate CSV</button>
+              </download-csv>
             </div>
             <div class="col-sm-6">
               <div class="btn-group btn-group-toggle"
@@ -78,6 +82,23 @@
     },
     mounted() {
       this.getData();
+    },
+    computed: {
+      CSVdata() {
+        var csvData = [];
+        Object.keys(this.tableData).forEach(key => {
+          this.tableData[key].forEach(element => {
+            csvData.push({
+              "id": element.id,
+              "deviceId": element.deviceId,
+              "type": element.type,
+              "value": element.value,
+              "timestamp": element.timestamp
+            });
+          });
+        });
+        return csvData;
+      }
     }
   }
 </script>

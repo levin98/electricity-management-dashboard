@@ -21,13 +21,16 @@ import router from "./router/index";
 import BlackDashboard from "./plugins/blackDashboard";
 import i18n from "./i18n"
 import './registerServiceWorker'
+import JsonCSV from 'vue-json-csv'
+
+Vue.component('downloadCsv', JsonCSV)
 Vue.use(BlackDashboard);
 Vue.use(VueRouter);
 Vue.use(RouterPrefetch);
 
 /* eslint-disable no-new */
 new Vue({
-  router,
-  i18n,
-  render: h => h(App)
+    router,
+    i18n,
+    render: h => h(App)
 }).$mount("#app");
