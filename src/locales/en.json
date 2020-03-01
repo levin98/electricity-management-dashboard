@@ -14,7 +14,7 @@
             "ems004",
             "ems005"
         ],
-        "tasks": "Tasks({count})",
+        "alerts": "Alerts({count})",
         "today": "Today",
         "dropdown": {
             "action": "Action",

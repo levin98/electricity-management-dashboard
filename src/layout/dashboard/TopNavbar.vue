@@ -48,26 +48,16 @@
                            :menu-on-right="!$rtl.isRTL"
                            title-tag="a" class="nav-item">
               <a slot="title" href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="true">
-                <div class="notification d-none d-lg-block d-xl-block"></div>
+                <div class="notification d-none d-lg-block d-xl-block" v-if="alertCount != 0"></div>
                 <i class="tim-icons icon-sound-wave"></i>
                 <p class="d-lg-none">
                   New Notifications
                 </p>
               </a>
               <li class="nav-link">
-                <a href="#" class="nav-item dropdown-item">Mike John responded to your email</a>
-              </li>
-              <li class="nav-link">
-                <a href="#" class="nav-item dropdown-item">You have 5 more tasks</a>
-              </li>
-              <li class="nav-link">
-                <a href="#" class="nav-item dropdown-item">Your friend Michael is in town</a>
-              </li>
-              <li class="nav-link">
-                <a href="#" class="nav-item dropdown-item">Another notification</a>
-              </li>
-              <li class="nav-link">
-                <a href="#" class="nav-item dropdown-item">Another one</a>
+                <router-link to="/alerts">
+                  <a href="#" class="nav-item dropdown-item">You have {{ alertCount }} alerts.</a>
+                </router-link>
               </li>
             </base-dropdown>
             <!-- <base-dropdown tag="li"
@@ -104,6 +94,7 @@
 <script>
   import { CollapseTransition } from 'vue2-transitions';
   import Modal from '@/components/Modal';
+  import io from "socket.io-client";
 
   export default {
     components: {
@@ -124,7 +115,8 @@
         activeNotifications: false,
         showMenu: false,
         searchModalVisible: false,
-        searchQuery: ''
+        searchQuery: '',
+        alertCount: 0
       };
     },
     methods: {
@@ -145,7 +137,24 @@
       },
       toggleMenu() {
         this.showMenu = !this.showMenu;
-      }
+      },
+      getAlert() {
+        var socket = io.connect("http://localhost:4000");
+        socket.on("alert", fetchedData => {
+          // console.log(fetchedData);
+          if (fetchedData.statusCode == 400) {
+            console.log(fetchedData);
+          } else {
+            // console.log(fetchedData);
+            if(fetchedData.length > 0) {
+              this.alertCount = fetchedData.length;
+            }
+          }
+        });
+      },
+    },
+    mounted() {
+      this.getAlert();
     }
   };
 </script>
