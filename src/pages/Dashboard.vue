@@ -250,7 +250,35 @@
         this.i18n.locale = 'ar';
         this.$rtl.enableRTL();
       }
-      this.getRealtimeData();
+      // this.getRealtimeData();
+      this.$socketClient.onOpen = () => {
+        console.log('socket connected')
+      }
+      this.$socketClient.onMessage = (msg) => {
+        if (JSON.parse(msg.data).body.RTdata) {
+          this.bigLineChart.allData = JSON.parse(msg.data).body.RTdata.value;
+          this.bigLineChart.allLabel = JSON.parse(msg.data).body.RTdata.timestamp;
+          this.selectIndex(this.selectedIndex);
+        }
+        if (JSON.parse(msg.data).body.totalData) {
+          this.totalLineChart.allData = JSON.parse(msg.data).body.totalData.value;
+          this.totalLineChart.allLabel = JSON.parse(msg.data).body.totalData.timestamp;
+          this.initTotalChart();
+        }
+        if (JSON.parse(msg.data).body.alert) {
+          this.$parent.$parent.$root.$emit('updateClearAlert', JSON.parse(msg.data).body.alert.length);
+        }
+      }
+      this.$socketClient.onClose = (msg) => {
+        console.log('socket closed')
+      }
+      this.$socketClient.onError = (msg) => {
+        console.log('socket error')
+      }
+      setInterval(() => {
+        this.$socketClient.sendObj({"action": "onGetRTData"})
+        this.$socketClient.sendObj({"action": "onGetAlert"})
+      }, 10000)
     },
     beforeDestroy() {
       if (this.$rtl.isRTL) {

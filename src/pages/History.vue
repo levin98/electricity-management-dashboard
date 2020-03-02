@@ -81,7 +81,29 @@
       }
     },
     mounted() {
-      this.getData();
+      // this.getData();
+      this.$socketClient.onOpen = () => {
+        console.log('socket connected')
+      }
+      this.$socketClient.onMessage = (msg) => {
+        // console.log(JSON.parse(msg.data))
+        if (JSON.parse(msg.data).body.historicalData) {
+          this.tableData = JSON.parse(msg.data).body.historicalData;
+        }
+        if (JSON.parse(msg.data).body.alert) {
+          this.$parent.$parent.$root.$emit('updateClearAlert', JSON.parse(msg.data).body.alert.length);
+        }
+      }
+      this.$socketClient.onClose = (msg) => {
+        console.log('socket closed')
+      }
+      this.$socketClient.onError = (msg) => {
+        console.log('socket error')
+      }
+      setInterval(() => {
+        this.$socketClient.sendObj({"action": "onGetRTData"})
+        this.$socketClient.sendObj({"action": "onGetAlert"})
+      }, 10000)
     },
     computed: {
       CSVdata() {

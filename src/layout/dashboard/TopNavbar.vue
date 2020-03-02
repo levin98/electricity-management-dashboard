@@ -154,11 +154,14 @@
       },
     },
     mounted() {
-      this.getAlert();
+      // this.getAlert();
     },
     created() {
       this.$root.$on('handleClearAlert', () => {
         this.alertCount = 0;
+      })
+      this.$root.$on('updateClearAlert', (data) => {
+        this.alertCount = data;
       })
     }
   };

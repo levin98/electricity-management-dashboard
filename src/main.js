@@ -22,7 +22,12 @@ import BlackDashboard from "./plugins/blackDashboard";
 import i18n from "./i18n"
 import './registerServiceWorker'
 import JsonCSV from 'vue-json-csv'
+import VueSimpleWebSocket from 'vue-simple-websocket'
 
+Vue.use(VueSimpleWebSocket, 'wss://4ysh218wsc.execute-api.us-east-1.amazonaws.com/Test', {
+    reconnectEnabled: true,
+    reconnectInterval: 5000 // time to reconnect in milliseconds
+})
 Vue.component('downloadCsv', JsonCSV)
 Vue.use(BlackDashboard);
 Vue.use(VueRouter);

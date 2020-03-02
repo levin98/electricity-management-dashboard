@@ -1,7 +1,7 @@
 <template>
   <div class="row">
       <div class="col-lg-12 col-md-12">
-        <card type="tasks" :header-classes="{'text-right': false}">
+        <card :header-classes="{'text-right': false}">
           <template slot="header">
             <h6 class="title d-inline">{{$t('dashboard.alerts', {count: alertCount})}}</h6>
             <base-dropdown menu-on-right=""
@@ -68,24 +68,52 @@
           blacklistData.blacklistedMessageId.push(element.messageId)
         })
 
-        axios.post("http://localhost:4000/blacklist", { body: blacklistData })
-        .then(response => {
-          // console.log(response)
-          if(response.status == 200) {
-            this.tableData = [];
-            this.$notify({type: 'success', message: 'Alerts have been cleared.'});
-            this.$parent.$parent.$root.$emit('handleClearAlert');
-          } else {
-            this.$notify({type: 'danger', message: 'Failed to clear all alerts, please try again later.'});
-          }
-        })
-        .catch(err => {
-          console.log(err)
-        });
+        // axios.post("http://localhost:4000/blacklist", { body: blacklistData })
+        // .then(response => {
+        //   // console.log(response)
+        //   if(response.status == 200) {
+        //     this.tableData = [];
+        //     this.$notify({type: 'success', message: 'Alerts have been cleared.'});
+        //     this.$parent.$parent.$root.$emit('handleClearAlert');
+        //   } else {
+        //     this.$notify({type: 'danger', message: 'Failed to clear all alerts, please try again later.'});
+        //   }
+        // })
+        // .catch(err => {
+        //   console.log(err)
+        // });
+        this.$socketClient.sendObj({"action": "onPutBlacklist", "data": blacklistData })
       }
     },
     mounted() {
-      this.getAlert();
+      // this.getAlert();
+      this.$socketClient.onOpen = () => {
+        console.log('socket connected')
+      }
+      this.$socketClient.onMessage = (msg) => {
+        // console.log(JSON.parse(msg.data))
+        if(JSON.parse(msg.data).body.alert) {
+          this.tableData = JSON.parse(msg.data).body.alert;
+          this.alertCount = JSON.parse(msg.data).body.alert.length;
+          this.$parent.$parent.$root.$emit('updateClearAlert', JSON.parse(msg.data).body.alert.length);
+        }
+        if(JSON.parse(msg.data).body.actionCallback) {
+          if(JSON.parse(msg.data).body.actionCallback === "putBlacklist" && JSON.parse(msg.data).statusCode == 200) {
+            this.tableData = [];
+            this.$notify({type: 'success', message: 'Alerts have been cleared.'});
+            this.$parent.$parent.$root.$emit('handleClearAlert');
+          }
+        }
+      }
+      this.$socketClient.onClose = (msg) => {
+        console.log('socket closed')
+      }
+      this.$socketClient.onError = (msg) => {
+        console.log('socket error')
+      }
+      setInterval(() => {
+        this.$socketClient.sendObj({"action": "onGetAlert"})
+      }, 10000)
     }
   };
 </script>

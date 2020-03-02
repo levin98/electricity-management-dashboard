@@ -25,6 +25,7 @@
         "vue-json-csv": "^1.2.10",
         "vue-router": "^3.0.2",
         "vue-router-prefetch": "^1.4.0",
+        "vue-simple-websocket": "0.0.3",
         "vue2-transitions": "^0.2.3"
     },
     "devDependencies": {
