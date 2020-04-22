@@ -141,6 +141,14 @@
           gradientColors: config.colors.primaryGradient,
           gradientStops: [1, 0.4, 0],
           categories: []
+        },
+        cost: {
+          first200: 0.218,
+          next100: 0.334,
+          next300: 0.516,
+          next600: 0.546,
+          next900: 0.571,
+          mincost: 3
         }
       }
     },
@@ -154,7 +162,7 @@
     },
     methods: {
       getRealtimeData() {
-        
+
         var socket = io.connect("http://localhost:4000");
         socket.on("newdata", fetchedData => {
           // console.log(fetchedData);
@@ -241,7 +249,18 @@
         // console.log(lastDate.diff(firstDate, 'hour'));
         this.averageHourlyPower = this.allPowerData / this.totalLineChart.allData.length / 1000;
         this.totalPower = this.averageHourlyPower * (lastDate.diff(firstDate, 'hour') + 1);
-        this.totalCost = this.averageHourlyPower / 3600 * lastDate.diff(firstDate, 'second') * 0.218;
+        let totalPowerConsumption = this.averageHourlyPower / 3600 * lastDate.diff(firstDate, 'second')
+        if (totalPowerConsumption <= 200) {
+          this.totalCost = this.cost.mincost + totalPowerConsumption * this.cost.first200
+        } else if (totalPowerConsumption <= 300) {
+          this.totalCost = this.cost.mincost + (200 * this.cost.first200) + ((totalPowerConsumption - 200) * this.cost.next100)
+        } else if (totalPowerConsumption <= 600) {
+          this.totalCost = this.cost.mincost + (200 * this.cost.first200) + (100 * this.cost.next100) + ((totalPowerConsumption - 300) * this.cost.next300)
+        } else if (totalPowerConsumption <= 900) {
+          this.totalCost = this.cost.mincost + (200 * this.cost.first200) + (100 * this.cost.next100) + (300 * this.cost.next300) + ((totalPowerConsumption - 600) * this.cost.next600)
+        } else {
+          this.totalCost = this.cost.mincost + (200 * this.cost.first200) + (100 * this.cost.next100) + (300 * this.cost.next300) + (300 * this.cost.next600) + ((totalPowerConsumption - 900) * this.cost.next900)
+        }
       }
     },
     mounted() {
@@ -268,6 +287,16 @@
         if (JSON.parse(msg.data).body.alert) {
           this.$parent.$parent.$root.$emit('updateClearAlert', JSON.parse(msg.data).body.alert.length);
         }
+        if (JSON.parse(msg.data).body.settings) {
+          // console.log(JSON.parse(msg.data).body.settings)
+          let settings = JSON.parse(msg.data).body.settings
+          this.cost.first200 = settings.first200
+          this.cost.next100 = settings.next100
+          this.cost.next300 = settings.next300
+          this.cost.next600 = settings.next600
+          this.cost.next900 = settings.next900
+          this.cost.mincost = settings.mincost
+        }
       }
       this.$socketClient.onClose = (msg) => {
         console.log('socket closed')
@@ -278,6 +307,7 @@
       setInterval(() => {
         this.$socketClient.sendObj({"action": "onGetRTData"})
         this.$socketClient.sendObj({"action": "onGetAlert"})
+        this.$socketClient.sendObj({"action": "onGetSettings"})
       }, 10000)
     },
     beforeDestroy() {
